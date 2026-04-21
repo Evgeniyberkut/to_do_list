@@ -48,18 +48,28 @@ class _HomeScreenState extends State<HomeScreen> {
   // Список архивных задач (кнопка удалить)
   final List<String> _archivedTasks = [];
 
-  //  диалоговое окно с полем для ввода текста
-  void _showAddTaskDialog() {
-    // TextEditingController управляет текстовым полем:
-    final TextEditingController controller = TextEditingController();
+  //убрал контроллер из метода и сделал глобальным в классе чтобы не создавать новый каждый раз
+  final TextEditingController _textController = TextEditingController();
+  
+  //добавил диспоуз 
+  @override
+  void dispose() {
+    print('работает котроллер освобожден');
+    _textController.dispose(); //осаободил память
+    super.dispose(); //выозов родительского класса
+  }
 
+  //  диалоговое окно с полем для ввода текста + обновляю метод
+  void _showAddTaskDialog() {
+    _textController.clear(); // чищу поле
+    
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Новая задача'),
           content: TextField(
-            controller: controller,
+            controller: _textController, // поле класса
             autofocus: true, // нагуглил курсор сразу в поле
             decoration: const InputDecoration(
               hintText: 'Введите текст задачи...',
@@ -74,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // кнопка добавить сохраняет задачу и закрывает диалог
             TextButton(
               onPressed: () {
-                final text = controller.text.trim(); // trim() убирает лишние пробелы
+                final text = _textController.text.trim(); // trim() убирает лишние пробелы
                 if (text.isNotEmpty) {
                   // setState() данные изменились нужно чтобы перерисовался экран
                   setState(() {

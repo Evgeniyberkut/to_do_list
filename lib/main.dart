@@ -18,10 +18,78 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const HomeScreen(), // стартовый экран — "Сегодня"
+      home: const MainScreen(), // стартовый экран — "Сегодня"
     );
   }
 }
+ 
+ class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
+
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+ }
+
+ class _MainScreenState extends State<MainScreen> {
+  //какая вкладка активна (1 средняя)
+  int _currentIndex = 1;
+  //три списка переехади сюда
+  final List<String> _tasks = [];
+  final List<String> _completedTasks = [];
+  final List<String> _archivedTasks = [];
+
+  //метод восстановления переехал сюда
+  void _restoreFromArchive(String task) {
+    setState(() {
+      _archivedTasks.remove(task);
+      _tasks.add(task);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    //список экранов
+    final List<Widget> screens = [
+      CompletedScreen(completedTasks: _completedTasks),
+      HomeScreen(
+        tasks: _tasks, 
+        completedTasks: _completedTasks, 
+        archivedTasks: _archivedTasks,
+        ),
+        ArchiveScreen(
+          archivedTasks: _archivedTasks, 
+          onRestore: _restoreFromArchive,
+          ),
+    ] ;
+    return Scaffold(
+      //экран по индексу показ
+      body: screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index; //переключение вкладки
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle_outline),
+            label: "Выполнено",
+            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Сегодня",
+            ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.archive_outlined),
+            label: "Архив",
+            ),
+        ]
+        ),
+    );
+  }
+}
+
 
 // ─────────────────────────────────────────────
 // меин эеран сегодня
@@ -29,7 +97,17 @@ class MyApp extends StatelessWidget {
 // используется тк  список задач меняется
 // ─────────────────────────────────────────────
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  //cписки из MainScreen
+  final List<String> tasks;
+  final List<String> completedTasks;
+  final List<String> archivedTasks;
+
+  const HomeScreen({
+    super.key,
+    required this.tasks,
+    required this.completedTasks,
+    required this.archivedTasks,
+    });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -38,14 +116,7 @@ class HomeScreen extends StatefulWidget {
 // класс где хранятся данные 
 // Всё с _ это приватное
 class _HomeScreenState extends State<HomeScreen> {
-  // список задач на сегодня
-  final List<String> _tasks = [];
 
-  // список выполненных задач (кнопка да)
-  final List<String> _completedTasks = [];
-
-  // Список архивных задач (кнопка удалить)
-  final List<String> _archivedTasks = [];
 
   //убрал контроллер из метода и сделал глобальным в классе чтобы не создавать новый каждый раз
   final TextEditingController _textController = TextEditingController();
@@ -86,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (text.isNotEmpty) {
                   // setState() данные изменились нужно чтобы перерисовался экран
                   setState(() {
-                    _tasks.add(text);
+                    widget.tasks.add(text);
                   });
                 }
                 Navigator.pop(context); // закрываем диалог
@@ -107,14 +178,14 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) {
         return AlertDialog(
           title: const Text('Выполнено?'),
-          content: Text(_tasks[index]), // показываем текст задачи
+          content: Text(widget.tasks[index]), // показываем текст задачи
           actions: [
             // удалить — задача в Архив
             TextButton(
               onPressed: () {
                 setState(() {
-                  _archivedTasks.add(_tasks[index]); // добавляем в архив
-                  _tasks.removeAt(index);             // удаляем из главного списка
+                  widget.archivedTasks.add(widget.tasks[index]); // добавляем в архив
+                  widget.tasks.removeAt(index);             // удаляем из главного списка
                 });
                 Navigator.pop(context);
               },
@@ -130,8 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  _completedTasks.add(_tasks[index]); // добавляем в выполненные
-                  _tasks.removeAt(index);              // удаляем из главного списка
+                  widget.completedTasks.add(widget.tasks[index]); // добавляем в выполненные
+                  widget.tasks.removeAt(index);              // удаляем из главного списка
                 });
                 Navigator.pop(context);
               },
@@ -142,15 +213,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
-  }
-
-  // метод восстановить задачу из архива на главный экран 
-  // Вызывается из ArchiveScreen через callback
-  void _restoreFromArchive(String task) {
-    setState(() {
-      _archivedTasks.remove(task);
-      _tasks.add(task);
-    });
   }
 
   //  build() метод flutter при перерисовке ──
@@ -164,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
 
       // содержимое экрана
-      body: _tasks.isEmpty
+      body: widget.tasks.isEmpty
           // Если пуст список  подсказку по центру
           ? const Center(
               child: Text(
@@ -175,64 +237,19 @@ class _HomeScreenState extends State<HomeScreen> {
           //  есть задачи — показываем список
           : ListView.builder(
               // itemCount колво элементов в списке
-              itemCount: _tasks.length,
+              itemCount: widget.tasks.length,
               // itemBuilder  строит каждый элемент списка
               itemBuilder: (context, index) {
                 return ListTile(
                   leading: const Icon(Icons.circle_outlined), // иконка слева
-                  title: Text(_tasks[index]),                 // текст задачи
+                  title: Text(widget.tasks[index]),                 // текст задачи
                   onTap: () => _showTaskDialog(index),        // нажатие на задачу
                 );
               },
             ),
 
-      // Нижняя навигационная панель с 2 иконками
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline),
-            label: 'Выполненные',
-          ),
-          //кнопка домой
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Сегодня',
-            ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.archive_outlined),
-            label: 'Архив',
-          ),
-        ],
-        onTap: (index) {
-          if (index == 0) {
-            // Navigator.push() — переходим на новый экран
-            // MaterialPageRoute — стандартный переход со слайдом
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => CompletedScreen(
-                  completedTasks: _completedTasks,
-                ),
-              ),
-            );
-          } else if (index == 2) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ArchiveScreen(
-                  archivedTasks: _archivedTasks,
-                  // onRestore — это коллбек:
-                  // передаём функцию как параметр, чтобы ArchiveScreen
-                  // вызвал и изменил данные в HomeScreen
-                  onRestore: _restoreFromArchive,
-                ),
-              ),
-            );
-          }
-        },
-      ),
-
+      
+    
       //кнопка "+" в правом нижнем углу
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTaskDialog,
@@ -244,7 +261,6 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 // ЭКРАН "ВЫПОЛНЕННЫЕ ЗАДАЧИ"
 class CompletedScreen extends StatelessWidget {
-  // Список получаем из HomeScreen как параметр конструктора.
   final List<String> completedTasks;
 
   const CompletedScreen({super.key, required this.completedTasks});
@@ -256,11 +272,6 @@ class CompletedScreen extends StatelessWidget {
         title: const Text('Выполненные задачи'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // leading — виджет слева в AppBar.
-        // Стрелка назад 
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context), // возврат на предыдущий экран
-        ),
       ),
       body: completedTasks.isEmpty
           ? const Center(
@@ -292,11 +303,8 @@ class CompletedScreen extends StatelessWidget {
   }
 }
 // ЭКРАН "АРХИВ"
-// StatefulWidget потому что  можно восстанавливать
-// при восстановлении список меняется, экран надо перерисовать.
 class ArchiveScreen extends StatefulWidget {
   final List<String> archivedTasks;
-  // строчная функция для коллбека в HomeScreen
   final Function(String) onRestore;
 
   const ArchiveScreen({
@@ -348,10 +356,6 @@ class _ArchiveScreenState extends State<ArchiveScreen> {
       appBar: AppBar(
         title: const Text('Архив'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: widget.archivedTasks.isEmpty
           ? const Center(

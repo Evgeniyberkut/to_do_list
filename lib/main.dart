@@ -117,7 +117,6 @@ class HomeScreen extends StatefulWidget {
 // Всё с _ это приватное
 class _HomeScreenState extends State<HomeScreen> {
 
-
   //убрал контроллер из метода и сделал глобальным в классе чтобы не создавать новый каждый раз
   final TextEditingController _textController = TextEditingController();
   
@@ -127,7 +126,40 @@ class _HomeScreenState extends State<HomeScreen> {
         _textController.dispose(); //осаободил память
     super.dispose(); //выозов родительского класса
   }
+  //строка дата время
+  String _getFormattedDate () {
+    final now = DateTime.now();
+    const weekdays = [
+      '',
+      'Понедельник',
+      'Вторник',
+      'Среда',
+      'Четверг',
+      'Пятница',
+      'Суббота',
+      'Воскресенье',
+    ];
+    const months = [
+      '',
+      'января',
+      'февраля',
+      'марта',
+      'апреля',
+      'мая',
+      'июня',
+      'июля',
+      'августа',
+      'сентября',
+      'октября',
+      'ноября',
+      'декабря',
+    ];
+    final weekday = weekdays[now.weekday];
+    final day = now.day;
+    final month = months[now.month];
 
+    return '$weekday, $day $month';
+  }
   //  диалоговое окно с полем для ввода текста + обновляю метод
   void _showAddTaskDialog() {
     _textController.clear(); // чищу поле
@@ -176,8 +208,20 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       // AppBar — верхняя полоса с названием экрана
       appBar: AppBar(
-        title: const Text('Сегодня'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Сегодня',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              _getFormattedDate(),//вызывли метод
+              style: const TextStyle(fontSize: 13, color: Colors.black),
+            ),
+          ],
+        ),
       ),
 
       // содержимое экрана
@@ -256,7 +300,7 @@ class CompletedScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Выполненные задачи'),
+        title: const Text('Выполнено'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         // leading — виджет слева в AppBar.
       ),

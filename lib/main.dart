@@ -170,51 +170,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // метод нажатия на задачу
-  // показывает диалог  "Выполнено?"
-  void _showTaskDialog(int index) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Выполнено?'),
-          content: Text(widget.tasks[index]), // показываем текст задачи
-          actions: [
-            // удалить — задача в Архив
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  widget.archivedTasks.add(widget.tasks[index]); // добавляем в архив
-                  widget.tasks.removeAt(index);             // удаляем из главного списка
-                });
-                Navigator.pop(context);
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Удалить'),
-            ),
-            // отмена закрываем диалог
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена'),
-            ),
-            // да  уходит в выполненные
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  widget.completedTasks.add(widget.tasks[index]); // добавляем в выполненные
-                  widget.tasks.removeAt(index);              // удаляем из главного списка
-                });
-                Navigator.pop(context);
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.green),
-              child: const Text('Да'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   //  build() метод flutter при перерисовке ──
   @override
   Widget build(BuildContext context) {
@@ -240,10 +195,42 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: widget.tasks.length,
               // itemBuilder  строит каждый элемент списка
               itemBuilder: (context, index) {
-                return ListTile(
-                  leading: const Icon(Icons.circle_outlined), // иконка слева
-                  title: Text(widget.tasks[index]),                 // текст задачи
-                  onTap: () => _showTaskDialog(index),        // нажатие на задачу
+                return Dismissible(
+                  key: ValueKey(widget.tasks[index]),
+                  //swipe right archive red
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.only(left: 20),
+                    child: const Icon(Icons.archive, color: Colors.white),
+                  ),
+
+                  // swipe left done green
+                  secondaryBackground: Container(
+                    color: Colors.green,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(left: 20),
+                    child: const Icon(Icons.check, color: Colors.white),
+                  ),
+
+                  onDismissed: (direction) {
+                    if (direction == DismissDirection.startToEnd) {
+                      setState(() {
+                        widget.archivedTasks.add(widget.tasks[index]);
+                        widget.tasks.removeAt(index);
+                      });
+                    } else {
+                      setState(() {
+                        widget.completedTasks.add(widget.tasks[index]);
+                        widget.tasks.removeAt(index);
+                      });
+                    }
+                  },
+
+                  child: ListTile(
+                    leading: const Icon(Icons.circle_outlined),
+                    title: Text(widget.tasks[index]),
+                  ),
                 );
               },
             ),

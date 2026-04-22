@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 void main() {
   runApp(const MyApp());
 }
-
 // корнвой виджет
 // StatelessWidget — виджет без внутреннего состояния.
 // MyApp просто задаёт название и тему приложения.
@@ -54,8 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
   //добавил диспоуз 
   @override
   void dispose() {
-    print('работает котроллер освобожден');
-    _textController.dispose(); //осаободил память
+        _textController.dispose(); //осаободил память
     super.dispose(); //выозов родительского класса
   }
 
@@ -190,13 +188,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Нижняя навигационная панель с 2 иконками
       bottomNavigationBar: BottomNavigationBar(
-        // currentIndex: нет активной вкладки на главном экране (0 = первая)
-        // ставим -1 но это вызовет ошибку, поэтому просто не выделяем
+        currentIndex: 1,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.check_circle_outline),
             label: 'Выполненные',
           ),
+          //кнопка домой
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Сегодня',
+            ),
           BottomNavigationBarItem(
             icon: Icon(Icons.archive_outlined),
             label: 'Архив',
@@ -214,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             );
-          } else if (index == 1) {
+          } else if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(
